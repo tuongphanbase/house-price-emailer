@@ -80,62 +80,9 @@
 <body>
 <div class="wrap">
   <h1>Nhà & căn hộ Hà Nội</h1>
-  <div class="subtitle">Cập nhật 16:28 13/10/2026 · 1 tin đăng</div>
-  <div class="kpi-strip"><div class="kpi"><div class="kpi-value">1</div><div class="kpi-label">Tổng số tin</div></div><div class="kpi"><div class="kpi-value">1 tỷ 200 triệu</div><div class="kpi-label">Nhà rẻ nhất</div></div><div class="kpi"><div class="kpi-value">1/1</div><div class="kpi-label">Có vị trí trên bản đồ</div></div></div>
-  
-<section>
-  <h2><span class="pill" style="background:#dbeafe;color:#1e40af;">Bản đồ</span> <span class="muted">1/1 tin có vị trí - số trên bản đồ khớp với số trên mỗi tin bên dưới</span></h2>
-  <div id="map"></div>
-</section>
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  if (typeof L === 'undefined') {
-    console.error('Leaflet failed to load - map skipped, rest of page still works.');
-    var mapEl = document.getElementById('map');
-    if (mapEl) mapEl.outerHTML = '<p class="muted">Không tải được bản đồ (lỗi mạng) - xem danh sách bên dưới.</p>';
-    return;
-  }
-  const markers = [{"lat": 21.0682703, "lon": 105.8239615, "number": 1, "title": "Ban nhà thụy khue- tây hồ- 4 tầng- 3pn- ô tô", "price": "1 tỷ 200 triệu", "url": "https://mogi.vn/quan-tay-ho/mua-nha-hem-ngo/ban-nha-thuy-khue-tay-ho-4-tang-3pn-o-to-id22729156", "category": "Nhà"}];
-  const map = L.map('map');
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 19,
-  }).addTo(map);
-  const bounds = [];
-  markers.forEach(m => {
-    const label = L.divIcon({
-      className: 'price-pin',
-      html: '<div class="price-pin-label">#' + m.number + ' · ' + m.price.replace(/</g, '&lt;') + '</div><div class="price-pin-arrow"></div>',
-      iconSize: null,
-      iconAnchor: [0, 0],
-    });
-    const marker = L.marker([m.lat, m.lon], {icon: label}).addTo(map);
-    marker.bindPopup(
-      '<strong>#' + m.number + ' - ' + m.title.replace(/</g, '&lt;') + '</strong><br>' +
-      m.price + '<br><a href="' + m.url + '" target="_blank" rel="noopener">Xem tin</a>'
-    );
-    bounds.push([m.lat, m.lon]);
-  });
-  if (bounds.length > 0) map.fitBounds(bounds, {padding: [30, 30]});
-});
-</script>
-<section>
-  <h2><span class="pill">Nhà</span> <span class="muted">1 tin · giá tăng dần</span></h2>
-  <div class="grid">
-<div class="card">
-  <div class="gallery"><a href="https://www.google.com/maps?q=21.0682703,105.8239615" target="_blank" rel="noopener"><img src="https://tuongphanbase.github.io/house-price-emailer/maps/22729156.png" alt="" loading="lazy"></a><a href="https://mogi.vn/quan-tay-ho/mua-nha-hem-ngo/ban-nha-thuy-khue-tay-ho-4-tang-3pn-o-to-id22729156" target="_blank" rel="noopener"><img src="https://cloud.mogi.vn/images/2026/03/01/368/4ec49812cdc64e988260ad81ef0543ac.jpg" alt="" loading="lazy"></a><a href="https://mogi.vn/quan-tay-ho/mua-nha-hem-ngo/ban-nha-thuy-khue-tay-ho-4-tang-3pn-o-to-id22729156" target="_blank" rel="noopener"><img src="https://cloud.mogi.vn/images/2026/03/01/361/06259993b78341f891cf0d0e498fe022.jpg" alt="" loading="lazy"></a><a href="https://mogi.vn/quan-tay-ho/mua-nha-hem-ngo/ban-nha-thuy-khue-tay-ho-4-tang-3pn-o-to-id22729156" target="_blank" rel="noopener"><img src="https://cloud.mogi.vn/images/2026/03/01/363/6e497ee9d4fd4344baabfbd7371f1bf5.jpg" alt="" loading="lazy"></a></div>
-  <a class="card-body-link" href="https://mogi.vn/quan-tay-ho/mua-nha-hem-ngo/ban-nha-thuy-khue-tay-ho-4-tang-3pn-o-to-id22729156" target="_blank" rel="noopener">
-    <div class="card-body">
-      <div class="card-title"><span class="map-number-badge">#1</span> Ban nhà thụy khue- tây hồ- 4 tầng- 3pn- ô tô</div>
-      <div class="card-meta">Quận Tây Hồ · 2631 m² · 3 PN · 2 WC</div>
-      <div class="card-meta faint">đăng 01/03/2026</div>
-      <div class="warn">⚠️ Cần kiểm tra: giá/m² bất thường (0 triệu/m²)</div>
-      <div class="price">1 tỷ 200 triệu</div>
-    </div>
-  </a>
-</div></div>
-</section>
+  <div class="subtitle">Cập nhật 19:34 13/10/2026 · 0 tin đăng</div>
+  <div class="kpi-strip"><div class="kpi"><div class="kpi-value">0</div><div class="kpi-label">Tổng số tin</div></div></div>
+  <p class="muted">Không có tin đăng nào kỳ này.</p>
   <footer>
     Nguồn: từng tin đăng thực tế trên Mogi.vn (không phải giá trung bình) · Trang tự động, chỉ mang tính tham khảo, không phải lời khuyên đầu tư.
   </footer>
