@@ -80,9 +80,62 @@
 <body>
 <div class="wrap">
   <h1>Nhà & căn hộ Hà Nội</h1>
-  <div class="subtitle">Cập nhật 13:43 14/10/2026 · 0 tin đăng</div>
-  <div class="kpi-strip"><div class="kpi"><div class="kpi-value">0</div><div class="kpi-label">Tổng số tin</div></div></div>
-  <p class="muted">Không có tin đăng nào kỳ này.</p>
+  <div class="subtitle">Cập nhật 16:37 14/10/2026 · 1 tin đăng</div>
+  <div class="kpi-strip"><div class="kpi"><div class="kpi-value">1</div><div class="kpi-label">Tổng số tin</div></div><div class="kpi"><div class="kpi-value">5 tỷ</div><div class="kpi-label">Nhà rẻ nhất</div></div><div class="kpi"><div class="kpi-value">1/1</div><div class="kpi-label">Có vị trí trên bản đồ</div></div></div>
+  
+<section>
+  <h2><span class="pill" style="background:#dbeafe;color:#1e40af;">Bản đồ</span> <span class="muted">1/1 tin có vị trí - số trên bản đồ khớp với số trên mỗi tin bên dưới</span></h2>
+  <div id="map"></div>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof L === 'undefined') {
+    console.error('Leaflet failed to load - map skipped, rest of page still works.');
+    var mapEl = document.getElementById('map');
+    if (mapEl) mapEl.outerHTML = '<p class="muted">Không tải được bản đồ (lỗi mạng) - xem danh sách bên dưới.</p>';
+    return;
+  }
+  const markers = [{"lat": 21.0298464, "lon": 105.7913272, "number": 1, "title": "hiếm -nhà cầu giấy-30/80 tầng 1-2 ngủ -nội thất đẹp-gần nhiều trườngĐH", "price": "5 tỷ", "url": "https://mogi.vn/quan-cau-giay/mua-nha-hem-ngo/hiem-nha-cau-giay-30-80-tang-1-2-ngu-noi-that-dep-gan-nhieu-truongdh-id22748441", "category": "Nhà"}];
+  const map = L.map('map');
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19,
+  }).addTo(map);
+  const bounds = [];
+  markers.forEach(m => {
+    const label = L.divIcon({
+      className: 'price-pin',
+      html: '<div class="price-pin-label">#' + m.number + ' · ' + m.price.replace(/</g, '&lt;') + '</div><div class="price-pin-arrow"></div>',
+      iconSize: null,
+      iconAnchor: [0, 0],
+    });
+    const marker = L.marker([m.lat, m.lon], {icon: label}).addTo(map);
+    marker.bindPopup(
+      '<strong>#' + m.number + ' - ' + m.title.replace(/</g, '&lt;') + '</strong><br>' +
+      m.price + '<br><a href="' + m.url + '" target="_blank" rel="noopener">Xem tin</a>'
+    );
+    bounds.push([m.lat, m.lon]);
+  });
+  if (bounds.length > 0) map.fitBounds(bounds, {padding: [30, 30]});
+});
+</script>
+<section>
+  <h2><span class="pill">Nhà</span> <span class="muted">1 tin · giá tăng dần</span></h2>
+  <div class="grid">
+<div class="card">
+  <div class="gallery"><a href="https://www.google.com/maps?q=21.0298464,105.7913272" target="_blank" rel="noopener"><img src="https://tuongphanbase.github.io/house-price-emailer/maps/22748441.png" alt="" loading="lazy"></a><a href="https://mogi.vn/quan-cau-giay/mua-nha-hem-ngo/hiem-nha-cau-giay-30-80-tang-1-2-ngu-noi-that-dep-gan-nhieu-truongdh-id22748441" target="_blank" rel="noopener"><img src="https://cloud.mogi.vn/images/2026/07/21/184/31aee33a5fc2439d86fbd78df3bd427f.jpg" alt="" loading="lazy"></a><a href="https://mogi.vn/quan-cau-giay/mua-nha-hem-ngo/hiem-nha-cau-giay-30-80-tang-1-2-ngu-noi-that-dep-gan-nhieu-truongdh-id22748441" target="_blank" rel="noopener"><img src="https://cloud.mogi.vn/images/2026/07/21/195/36f2b76bf63c40eeb305cc8d9d34ee44.jpg" alt="" loading="lazy"></a><a href="https://mogi.vn/quan-cau-giay/mua-nha-hem-ngo/hiem-nha-cau-giay-30-80-tang-1-2-ngu-noi-that-dep-gan-nhieu-truongdh-id22748441" target="_blank" rel="noopener"><img src="https://cloud.mogi.vn/images/2026/07/21/195/e700a25f885641839af365d75b749611.jpg" alt="" loading="lazy"></a><a href="https://mogi.vn/quan-cau-giay/mua-nha-hem-ngo/hiem-nha-cau-giay-30-80-tang-1-2-ngu-noi-that-dep-gan-nhieu-truongdh-id22748441" target="_blank" rel="noopener"><img src="https://cloud.mogi.vn/images/2026/07/21/192/b676df7ab694422eab261a5a5e25b717.jpg" alt="" loading="lazy"></a><a href="https://mogi.vn/quan-cau-giay/mua-nha-hem-ngo/hiem-nha-cau-giay-30-80-tang-1-2-ngu-noi-that-dep-gan-nhieu-truongdh-id22748441" target="_blank" rel="noopener"><img src="https://cloud.mogi.vn/images/2026/07/21/190/60805541e81d4f15b728b4f5b8879e6e.jpg" alt="" loading="lazy"></a><a href="https://mogi.vn/quan-cau-giay/mua-nha-hem-ngo/hiem-nha-cau-giay-30-80-tang-1-2-ngu-noi-that-dep-gan-nhieu-truongdh-id22748441" target="_blank" rel="noopener"><img src="https://cloud.mogi.vn/images/2026/07/21/199/8a581f451a5d4bd8885e44404fa0f56f.jpg" alt="" loading="lazy"></a></div>
+  <a class="card-body-link" href="https://mogi.vn/quan-cau-giay/mua-nha-hem-ngo/hiem-nha-cau-giay-30-80-tang-1-2-ngu-noi-that-dep-gan-nhieu-truongdh-id22748441" target="_blank" rel="noopener">
+    <div class="card-body">
+      <div class="card-title"><span class="map-number-badge">#1</span> hiếm -nhà cầu giấy-30/80 tầng 1-2 ngủ -nội thất đẹp-gần nhiều trườngĐH</div>
+      <div class="card-meta">Quận Cầu Giấy · 80 m² · 2 PN · 2 WC</div>
+      <div class="card-meta faint">đăng 27/07/2026</div>
+      
+      <div class="price">5 tỷ</div>
+    </div>
+  </a>
+</div></div>
+</section>
   <footer>
     Nguồn: từng tin đăng thực tế trên Mogi.vn (không phải giá trung bình) · Trang tự động, chỉ mang tính tham khảo, không phải lời khuyên đầu tư.
   </footer>
