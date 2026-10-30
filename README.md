@@ -46,7 +46,14 @@ Runs automatically on a schedule via GitHub Actions.
 4. **Self-check pass** (`flag_suspicious`): independent of the AI step,
    flags (doesn't remove) any listing with an implausible price-per-m²,
    or where a price mentioned in the title disagrees with the price
-   actually used — shown inline with a ⚠️ marker so you can eyeball it.
+   actually used — shown inline in an amber note so you can eyeball it.
+
+   **No repeats**: a listing already emailed is not sent again for
+   `REPEAT_AFTER_DAYS` days (default 7), unless its price drops - then it
+   comes back with the old price shown. A run that finds nothing new sends
+   no email and leaves the GitHub Page showing the last listings. Both the
+   sent list and the price history are kept on the `house-price-state`
+   branch.
 
 5. **Photos**: fetches each surviving listing's own detail page and
    pulls its photo gallery (its `og:image` plus other photos found on the

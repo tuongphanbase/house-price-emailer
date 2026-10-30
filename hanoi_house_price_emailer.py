@@ -55,6 +55,7 @@ SETUP
      export SEND_ONLY_ON_CHANGE="false"        # optional, default false
      export TIMEZONE="Asia/Ho_Chi_Minh"        # optional, for the subject line
      export STATE_FILE="state/last_price.json" # optional, dedup state file
+     export REPEAT_AFTER_DAYS="7"              # optional, days before an emailed listing can be sent again
      export ALLOW_INSECURE_SSL_FALLBACK="false"
      export APARTMENT_URL="https://mogi.vn/ha-noi/mua-can-ho-chung-cu"
      export HOUSE_URL="https://mogi.vn/ha-noi/mua-nha"
@@ -101,6 +102,10 @@ HEADERS = {
 }
 EMAIL_DIR = "email"
 STATE_FILE = os.environ.get("STATE_FILE", "state/last_price.json")
+# A listing already emailed is not sent again for this many days, unless its
+# price drops. Mogi's first page changes slowly, so a one-day memory meant the
+# same listings went out every morning.
+REPEAT_AFTER_DAYS = int(os.environ.get("REPEAT_AFTER_DAYS") or "7")
 SEND_ONLY_ON_CHANGE = os.environ.get("SEND_ONLY_ON_CHANGE", "false").lower() == "true"
 ALLOW_INSECURE_SSL_FALLBACK = os.environ.get("ALLOW_INSECURE_SSL_FALLBACK", "false").lower() == "true"
 # Real Hanoi apartments/houses for SALE are never priced this low in triệu
@@ -269,8 +274,8 @@ def load_last_hash(path=STATE_FILE):
 
 
 def _today_str():
-    """Today's date (YYYY-MM-DD) in TIMEZONE - used to detect a new day
-    has started, so the sent-ids memory can reset automatically."""
+    """Today's date (YYYY-MM-DD) in TIMEZONE - the date stored against each
+    listing that gets emailed."""
     tz_name = os.environ.get("TIMEZONE", "Asia/Ho_Chi_Minh")
     try:
         from zoneinfo import ZoneInfo
@@ -280,39 +285,40 @@ def _today_str():
     return now.strftime("%Y-%m-%d")
 
 
-def load_last_sent_ids(path=STATE_FILE):
-    """Returns the accumulated set of listing IDs already sent SO FAR
-    TODAY (across every run today, not just the last one). Automatically
-    resets to empty once the stored date no longer matches today - so
-    this never carries over into a new day, but does accumulate within
-    the same day across all of that day's runs."""
+def load_recently_sent(path=STATE_FILE, days=REPEAT_AFTER_DAYS):
+    """Returns {listing_id: "YYYY-MM-DD" it was emailed} for every listing
+    emailed in the last `days` days, across runs and days. Also reads the
+    older one-day format ({"date": ..., "sent_ids": [...]}) so the first
+    run after an update keeps what that day already sent."""
     if not os.path.exists(path):
-        return set()
+        return {}
     try:
         with open(path) as f:
             data = json.load(f)
-        if data.get("date") != _today_str():
-            return set()
-        return set(data.get("sent_ids", []))
     except (json.JSONDecodeError, OSError) as e:
-        print(f"  could not read {path} ({e}) - treating today's sent-ids as empty", file=sys.stderr)
-        return set()
+        print(f"  could not read {path} ({e}) - treating every listing as new", file=sys.stderr)
+        return {}
+    sent = dict(data.get("sent") or {})
+    if not sent and data.get("sent_ids"):
+        sent = {lid: data.get("date") or _today_str() for lid in data["sent_ids"]}
+    cutoff = (date.fromisoformat(_today_str()) - timedelta(days=days)).isoformat()
+    return {lid: day for lid, day in sent.items() if day and day > cutoff}
 
 
-def save_last_hash(price_hash, sent_ids=None, path=STATE_FILE):
+def save_last_hash(price_hash, sent=None, path=STATE_FILE):
+    """Saves the listings hash and {listing_id: date emailed} (see load_recently_sent)."""
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path, "w") as f:
         json.dump({
             "hash": price_hash,
-            "date": _today_str(),
-            "sent_ids": sorted(sent_ids) if sent_ids is not None else [],
+            "sent": dict(sorted((sent or {}).items())),
             "updated": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         }, f)
 
 
-# Separate file from STATE_FILE (which resets daily) - price history needs
-# to persist ACROSS days to detect a real drop, so it's pruned by age
-# instead of reset by date.
+# Separate file from STATE_FILE - price history needs to cover every listing
+# seen, not just the ones emailed, to detect a real drop, so it's pruned by
+# age instead.
 PRICE_HISTORY_FILE = os.environ.get("PRICE_HISTORY_FILE", "state/price_history.json")
 PRICE_HISTORY_MAX_AGE_DAYS = 30  # entries not seen in this long are dropped, to keep the file bounded
 
@@ -1666,20 +1672,44 @@ def cmd_build():
 
     listings = apply_ai_verdicts(listings)
     print(f"Total after AI review: {len(listings)} listing(s).")
+    fetched_any = bool(listings)
 
-    # Don't repeat any listing already sent earlier TODAY - accumulates
-    # across every run within the same day, and resets automatically at
-    # the start of a new day (see load_last_sent_ids/_today_str).
-    previously_sent_ids = load_last_sent_ids()
-    repeats = [l for l in listings if l["id"] in previously_sent_ids]
+    # Price drops first, against every listing seen in the last
+    # PRICE_HISTORY_MAX_AGE_DAYS: a listing already emailed whose price fell
+    # is worth sending again.
+    price_history = load_price_history()
+    drops_found = 0
+    for l in listings:
+        prev = price_history.get(l["id"])
+        price_now = l["price_trieu"]
+        if (
+            prev is not None
+            and isinstance(prev.get("price_trieu"), (int, float))
+            and isinstance(price_now, (int, float))
+            and price_now < prev["price_trieu"]
+        ):
+            l["price_drop"] = {"previous": prev["price_trieu"], "current": price_now}
+            drops_found += 1
+        if isinstance(price_now, (int, float)):
+            price_history[l["id"]] = {"price_trieu": price_now, "last_seen": _today_str()}
+    save_price_history(price_history)
+    if drops_found:
+        print(f"  {drops_found} listing(s) have a lower price than last seen (shown with ▼ in the email).")
+
+    # Don't repeat a listing emailed in the last REPEAT_AFTER_DAYS days,
+    # across runs and days, unless its price dropped since.
+    recently_sent = load_recently_sent()
+    repeats = [l for l in listings if l["id"] in recently_sent and not l.get("price_drop")]
     if repeats:
-        print(f"  Excluding {len(repeats)} listing(s) already sent earlier today:", file=sys.stderr)
+        print(f"  Excluding {len(repeats)} listing(s) already sent in the last {REPEAT_AFTER_DAYS} days:",
+              file=sys.stderr)
         for l in repeats[:10]:
             print(f"    [{l['category']}] {format_price(l['price_trieu'])} - {l['title'][:50]}", file=sys.stderr)
         if len(repeats) > 10:
             print(f"    ... and {len(repeats) - 10} more", file=sys.stderr)
-    listings = [l for l in listings if l["id"] not in previously_sent_ids]
-    print(f"Total after excluding today's repeats: {len(listings)} listing(s).")
+    repeat_ids = {l["id"] for l in repeats}
+    listings = [l for l in listings if l["id"] not in repeat_ids]
+    print(f"Total after excluding recent repeats: {len(listings)} listing(s).")
 
     print(f"Geocoding {len(listings)} listing(s) via Nominatim (free, ~1 req/sec) ...")
     for i, l in enumerate(listings):
@@ -1712,6 +1742,16 @@ def cmd_build():
             print(f"    ... and {len(too_far) - 10} more", file=sys.stderr)
     listings = [l for l in listings if l not in too_far]
     print(f"Total within {MAX_DISTANCE_FROM_CENTER_KM}km of central Hanoi: {len(listings)} listing(s).")
+
+    # Listings were fetched but every one was already sent (or filtered out):
+    # send nothing and leave the GitHub Page showing the last listings,
+    # instead of an empty "0 tin" email and an empty page. (When nothing could
+    # be fetched at all, the email below still says so.)
+    if fetched_any and not listings:
+        print("No new listings since the last email - nothing to send; the GitHub Page keeps the last listings.")
+        with open(os.path.join(EMAIL_DIR, "meta.json"), "w") as f:
+            json.dump({"send": False}, f)
+        return
 
     print(f"Fetching photo galleries for {len(listings)} listing(s) (up to "
           f"{MAX_IMAGES_PER_LISTING} each) ...")
@@ -1753,25 +1793,6 @@ def cmd_build():
             l["map_image_url"] = map_url
     print(f"  Generated {map_ok}/{len(to_map)} map image(s).")
 
-    price_history = load_price_history()
-    drops_found = 0
-    for l in listings:
-        prev = price_history.get(l["id"])
-        price_now = l["price_trieu"]
-        if (
-            prev is not None
-            and isinstance(prev.get("price_trieu"), (int, float))
-            and isinstance(price_now, (int, float))
-            and price_now < prev["price_trieu"]
-        ):
-            l["price_drop"] = {"previous": prev["price_trieu"], "current": price_now}
-            drops_found += 1
-        if isinstance(price_now, (int, float)):
-            price_history[l["id"]] = {"price_trieu": price_now, "last_seen": _today_str()}
-    save_price_history(price_history)
-    if drops_found:
-        print(f"  {drops_found} listing(s) have a lower price than last seen (shown with ▼ in the email).")
-
     flagged = [(l, flag_suspicious(l)) for l in listings]
     flagged = [(l, w) for l, w in flagged if w]
     if flagged:
@@ -1812,10 +1833,11 @@ def cmd_build():
     with open(GITHUB_PAGE_PATH, "w", encoding="utf-8") as f:
         f.write(page_html)
 
-    all_sent_today = previously_sent_ids | {l["id"] for l in listings}
-    save_last_hash(price_hash, sent_ids=all_sent_today)
+    sent = dict(recently_sent)
+    sent.update({l["id"]: _today_str() for l in listings})
+    save_last_hash(price_hash, sent=sent)
     print(f"Built email ({len(listings)} listings). Saved to ./{EMAIL_DIR}/ "
-          f"({len(all_sent_today)} listing(s) excluded from the rest of today).")
+          f"({len(sent)} listing(s) won't be sent again for {REPEAT_AFTER_DAYS} days unless the price drops).")
     print(f"Wrote GitHub Page to {GITHUB_PAGE_PATH}")
 
 
