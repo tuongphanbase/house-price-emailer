@@ -775,9 +775,9 @@ def build_listing_card_html(l):
     if l.get("price_drop"):
         prev_str = escape(format_price(l["price_drop"]["previous"]))
         price_drop_html = (
-            f'<span style="display:inline-block;background:#eff6ff;color:#1d4ed8;font-weight:700;'
-            f'font-size:12px;padding:5px 10px;border-radius:999px;margin-left:6px;">'
-            f'⬇ trước {prev_str}</span>'
+            f'<span style="display:inline-block;background:#EDF0FC;color:#3B5BDB;font-weight:600;'
+            f'font-size:12px;padding:2px 9px;border-radius:999px;margin-left:6px;">'
+            f'&#9660; trước {prev_str}</span>'
         )
     details = []
     if l["area"]:
@@ -796,8 +796,8 @@ def build_listing_card_html(l):
         warning_text = escape("Cần kiểm tra: " + "; ".join(warnings))
         warning_html = f"""
 <tr><td colspan="2" style="padding:0 20px 16px;">
-  <table role="presentation" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;width:100%;">
-    <tr><td style="padding:8px 12px;font-size:12px;color:#92400e;font-weight:600;">⚠️ {warning_text}</td></tr>
+  <table role="presentation" cellpadding="0" cellspacing="0" style="background:#FCF2DF;border-radius:6px;width:100%;">
+    <tr><td style="padding:8px 12px;font-size:12px;color:#9A5B06;font-weight:500;">{warning_text}</td></tr>
   </table>
 </td></tr>"""
 
@@ -837,18 +837,18 @@ def build_listing_card_html(l):
         image_row = ""
 
     return f"""
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="email-card" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:16px;overflow:hidden;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="email-card" style="background:#ffffff;border:1px solid #E2E4E8;border-radius:8px;margin-bottom:12px;overflow:hidden;">
 {image_row}
 <tr>
-  <td colspan="2" style="padding:16px 20px 4px;vertical-align:top;">
-    <a href="{escape(l['url'])}" style="color:#111827;text-decoration:none;font-weight:700;font-size:15px;line-height:1.4;">{escape(l['title'])}</a><br>
-    <span style="color:#6b7280;font-size:13px;line-height:1.6;">{district_str} · {detail_str}</span><br>
-    <span style="color:#9ca3af;font-size:12px;">đăng {posted_str}</span>
+  <td colspan="2" style="padding:14px 16px 4px;vertical-align:top;">
+    <a href="{escape(l['url'])}" class="email-text" style="color:#1D2129;text-decoration:none;font-weight:600;font-size:15px;line-height:1.4;">{escape(l['title'])}</a><br>
+    <span class="email-muted" style="color:#596170;font-size:13px;line-height:1.6;">{district_str} · {detail_str}</span><br>
+    <span class="email-muted" style="color:#6E7581;font-size:12px;">đăng {posted_str}</span>
   </td>
 </tr>
 <tr>
-  <td colspan="2" style="padding:10px 20px 16px;vertical-align:top;">
-    <span style="display:inline-block;background:#ecfdf5;color:#047857;font-weight:800;font-size:15px;padding:6px 12px;border-radius:999px;font-family:ui-monospace,'SF Mono','Cascadia Code','Roboto Mono',Menlo,monospace;font-variant-numeric:tabular-nums;">{price_str}</span>{price_drop_html}
+  <td colspan="2" style="padding:8px 16px 14px;vertical-align:top;">
+    <span style="display:inline-block;background:#E5F3EB;color:#1A7F4B;font-weight:600;font-size:14px;padding:2px 10px;border-radius:999px;font-variant-numeric:tabular-nums;">{price_str}</span>{price_drop_html}
   </td>
 </tr>
 {warning_html}
@@ -888,7 +888,7 @@ def build_listing_card_page_html(l):
     warning_html = ""
     if warnings:
         warning_text = escape("Cần kiểm tra: " + "; ".join(warnings))
-        warning_html = f'<div class="warn">⚠️ {warning_text}</div>'
+        warning_html = f'<div class="warn">{warning_text}</div>'
 
     images = l.get("images") or ([l["image_url"]] if l.get("image_url") else [])
     map_image_url = l.get("map_image_url")
@@ -954,7 +954,7 @@ def build_github_page_html(listings, timestamp):
     if geocoded:
         map_section = f"""
 <section>
-  <h2><span class="pill" style="background:#dbeafe;color:#1e40af;">Bản đồ</span> <span class="muted">{len(geocoded)}/{len(listings)} tin có vị trí - số trên bản đồ khớp với số trên mỗi tin bên dưới</span></h2>
+  <h2><span class="pill">Bản đồ</span> <span class="muted">{len(geocoded)}/{len(listings)} tin có vị trí - số trên bản đồ khớp với số trên mỗi tin bên dưới</span></h2>
   <div id="map"></div>
 </section>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
@@ -1011,82 +1011,84 @@ document.addEventListener('DOMContentLoaded', function() {{
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>Nhà & căn hộ Hà Nội</title>
+<script>
+  // Same light/dark choice as the other tuongphanbase pages, else the system's.
+  (function(){{
+    let t = null; try{{ t = localStorage.getItem('fleet_theme'); }}catch(e){{}}
+    document.documentElement.setAttribute('data-theme', t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+  }})();
+</script>
+<link rel="stylesheet" href="../emailer-dashboard/theme.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <style>
-  :root {{
-    --bg:#f7f7f8; --surface:#ffffff; --border:#e4e4e7; --text:#18181b;
-    --muted:#71717a; --faint:#a1a1aa; --accent:#a21caf; --accent-soft:#fae8ff;
-    --accent-text:#86198f; --positive:#16a34a; --positive-soft:#ecfdf5; --warn-soft:#fffbeb; --warn-text:#92400e;
-  }}
-  @media (prefers-color-scheme: dark) {{
-    :root {{ --bg:#0b0b0d; --surface:#17171a; --border:#2a2a2e; --text:#f4f4f5; --muted:#a1a1aa; --faint:#71717a; }}
-  }}
-  #map {{ height:420px; border-radius:12px; border:1px solid var(--border); z-index:0; }}
+  /* Colours, fonts and the app bar come from ../emailer-dashboard/theme.css, shared by every page. */
+  #map {{ height:420px; border-radius:var(--radius-lg); border:1px solid var(--border); z-index:0; }}
   .price-pin {{ background:transparent; border:none; }}
   .price-pin-label {{
     position:absolute; transform:translate(-50%, -100%);
-    background:var(--accent); color:#fff; font-weight:700; font-size:12px;
-    padding:4px 8px; border-radius:6px; white-space:nowrap;
-    box-shadow:0 2px 6px rgba(0,0,0,.25);
-    font-family:ui-monospace,'SF Mono','Cascadia Code','Roboto Mono',Menlo,monospace;
+    background:var(--brand); color:#fff; font-weight:600; font-size:12px;
+    padding:3px 7px; border-radius:4px; white-space:nowrap; font-variant-numeric:tabular-nums;
   }}
   .price-pin-arrow {{
     position:absolute; transform:translate(-50%, -2px);
     width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent;
-    border-top:6px solid var(--accent);
+    border-top:6px solid var(--brand);
   }}
-  * {{ box-sizing:border-box; }}
-  body {{
-    margin:0; background:var(--bg); color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-  }}
-  .wrap {{ max-width:1100px; margin:0 auto; padding:32px 20px 60px; }}
-  h1 {{ font-size:24px; font-weight:800; letter-spacing:-0.3px; margin:0; }}
-  .subtitle {{ color:var(--muted); font-size:13px; margin:6px 0 24px; }}
-  .kpi-strip {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px; margin-bottom:32px; }}
-  .kpi {{ background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }}
-  .kpi-value {{
-    font-size:19px; font-weight:800; font-family:ui-monospace,'SF Mono','Cascadia Code','Roboto Mono',Menlo,monospace;
-    font-variant-numeric:tabular-nums; color:var(--accent-text);
-  }}
-  .kpi-label {{ font-size:11.5px; color:var(--muted); margin-top:2px; }}
-  h2 {{ font-size:15px; margin:0 0 14px; display:flex; align-items:center; gap:10px; }}
-  .pill {{ background:var(--accent-soft); color:var(--accent-text); font-weight:700; padding:5px 12px; border-radius:999px; }}
-  .muted {{ color:var(--muted); font-weight:400; font-size:12px; }}
-  section {{ margin-bottom:36px; }}
-  .grid {{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px; }}
-  .card {{
-    display:block; background:var(--surface); border:1px solid var(--border); border-radius:12px;
-    overflow:hidden; transition:transform .15s ease, box-shadow .15s ease;
-  }}
-  .card:hover {{ transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.08); }}
+  .wrap {{ max-width:1100px; margin:0 auto; padding:20px 24px 48px; }}
+  .kpi-strip {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-lg); margin-bottom:24px; }}
+  .kpi {{ padding:12px 16px; border-left:1px solid var(--border); }}
+  .kpi:first-child {{ border-left:none; }}
+  .kpi-value {{ font-size:18px; font-weight:600; font-variant-numeric:tabular-nums; }}
+  .kpi-label {{ font-size:12px; color:var(--text-secondary); margin-top:2px; }}
+  h2 {{ font-size:15px; font-weight:600; margin:0 0 12px; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }}
+  .pill {{ font-weight:600; }}
+  .muted {{ color:var(--text-secondary); font-weight:400; font-size:13px; }}
+  section {{ margin-bottom:32px; }}
+  .grid {{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; }}
+  .card {{ display:block; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }}
+  .card:hover {{ border-color:var(--border-strong); }}
   .card-body-link {{ display:block; text-decoration:none; color:inherit; }}
-  .gallery {{ display:flex; overflow-x:auto; scroll-snap-type:x mandatory; background:var(--border); }}
+  .gallery {{ display:flex; overflow-x:auto; scroll-snap-type:x mandatory; background:var(--surface-alt); }}
   .gallery a {{ flex:0 0 100%; display:block; scroll-snap-align:start; }}
   .gallery img {{ height:180px; width:100%; object-fit:cover; display:block; }}
   .gallery-empty {{ height:120px; }}
-  .card-body {{ padding:14px 16px 16px; }}
-  .card-title {{ font-weight:700; font-size:14px; line-height:1.4; margin-bottom:6px; }}
+  .card-body {{ padding:12px 14px 14px; }}
+  .card-title {{ font-weight:600; font-size:14px; line-height:1.4; margin-bottom:4px; }}
   .map-number-badge {{
-    display:inline-block; background:var(--accent); color:#fff; font-size:11px; font-weight:800;
-    padding:1px 6px; border-radius:5px; vertical-align:middle;
-    font-family:ui-monospace,'SF Mono','Cascadia Code','Roboto Mono',Menlo,monospace;
+    display:inline-block; background:var(--brand); color:#fff; font-size:11px; font-weight:600;
+    padding:0 6px; border-radius:4px; vertical-align:1px; margin-right:2px; font-variant-numeric:tabular-nums;
   }}
-  .card-meta {{ color:var(--muted); font-size:12.5px; line-height:1.6; }}
-  .card-meta.faint {{ color:var(--faint); font-size:11.5px; }}
-  .warn {{ background:var(--warn-soft); color:var(--warn-text); font-size:11.5px; font-weight:600; padding:6px 10px; border-radius:6px; margin-top:8px; }}
+  .card-meta {{ color:var(--text-secondary); font-size:13px; line-height:1.5; }}
+  .card-meta.faint {{ color:var(--text-tertiary); font-size:12px; }}
+  .warn {{ background:var(--warning-tint); color:var(--warning); font-size:12px; font-weight:500; padding:6px 10px; border-radius:var(--radius-md); margin-top:8px; }}
   .price {{
-    margin-top:10px; display:inline-block; background:var(--positive-soft); color:var(--positive);
-    font-weight:800; font-size:15px; padding:6px 12px; border-radius:999px;
-    font-family:ui-monospace,'SF Mono','Cascadia Code','Roboto Mono',Menlo,monospace; font-variant-numeric:tabular-nums;
+    margin-top:8px; display:inline-block; background:var(--success-tint); color:var(--success);
+    font-weight:600; font-size:14px; padding:2px 10px; border-radius:var(--radius-pill); font-variant-numeric:tabular-nums;
   }}
-  footer {{ color:var(--faint); font-size:11.5px; margin-top:40px; line-height:1.7; }}
+  footer {{ color:var(--text-tertiary); font-size:12px; margin-top:32px; line-height:1.6; }}
+  @media (max-width:640px) {{
+    .wrap {{ padding:16px 16px 40px; }}
+    .kpi {{ border-left:none; border-top:1px solid var(--border); }}
+    .kpi:first-child {{ border-top:none; }}
+  }}
 </style>
 </head>
 <body>
+<header class="appbar">
+  <a class="appbar-name" href="../emailer-dashboard/">tuongphanbase</a>
+  <nav class="appbar-tabs" aria-label="Trang">
+    <a href="../emailer-dashboard/">Bot</a>
+    <a href="../emailer-dashboard/prices.html">Giá hôm nay</a>
+    <a href="../emailer-dashboard/projects.html">Dự án</a>
+  </nav>
+</header>
 <div class="wrap">
-  <h1>Nhà & căn hộ Hà Nội</h1>
-  <div class="subtitle">Cập nhật {escape(timestamp)} · {len(listings)} tin đăng</div>
+  <div class="page-head">
+    <div>
+      <h1>Nhà & căn hộ Hà Nội</h1>
+      <div class="page-sub">Cập nhật {escape(timestamp)} · {len(listings)} tin đăng</div>
+    </div>
+  </div>
   <div class="kpi-strip">{kpi_html}</div>
   {body}
   <footer>
@@ -1100,8 +1102,8 @@ document.addEventListener('DOMContentLoaded', function() {{
 def build_html(listings, timestamp):
     if not listings:
         body = """
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="email-card" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;">
-<tr><td style="padding:24px;color:#6b7280;font-size:14px;">Không lấy được tin đăng nào kỳ này. Kiểm tra trực tiếp nguồn hoặc xem log để biết chi tiết.</td></tr>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="email-card" style="background:#ffffff;border:1px solid #E2E4E8;border-radius:8px;">
+<tr><td style="padding:20px;color:#596170;font-size:14px;">Không lấy được tin đăng nào kỳ này. Kiểm tra trực tiếp nguồn hoặc xem log để biết chi tiết.</td></tr>
 </table>"""
     else:
         sections = []
@@ -1111,10 +1113,10 @@ def build_html(listings, timestamp):
                 continue
             cards = "\n".join(build_listing_card_html(l) for l in cat_listings)
             sections.append(f"""
-<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 14px;">
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 10px;">
 <tr>
-  <td style="background:#fae8ff;color:#86198f;font-weight:700;font-size:13px;padding:6px 14px;border-radius:999px;">{escape(category)}</td>
-  <td style="padding-left:10px;color:#9ca3af;font-size:12px;">{len(cat_listings)} tin · giá tăng dần</td>
+  <td class="email-text" style="color:#1D2129;font-weight:600;font-size:16px;">{escape(category)}</td>
+  <td class="email-muted" style="padding-left:8px;color:#596170;font-size:13px;">{len(cat_listings)} tin · giá tăng dần</td>
 </tr>
 </table>
 {cards}""")
@@ -1127,27 +1129,27 @@ def build_html(listings, timestamp):
 <meta name="color-scheme" content="light dark">
 <style>
   @media (prefers-color-scheme: dark) {{
-    .email-bg {{ background:#0b0b0d !important; }}
-    .email-card {{ background:#17171a !important; border-color:#2a2a2e !important; }}
-    .email-text {{ color:#f4f4f5 !important; }}
-    .email-muted {{ color:#a1a1aa !important; }}
+    .email-bg {{ background:#121316 !important; }}
+    .email-card {{ background:#1B1D21 !important; border-color:#2F3238 !important; }}
+    .email-text {{ color:#E8EAED !important; }}
+    .email-muted {{ color:#A3A9B3 !important; }}
   }}
 </style>
 </head>
-<body style="margin:0; padding:0; background:#f3f4f6; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;" class="email-bg">
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f3f4f6;padding:24px 12px;">
+<body style="margin:0; padding:0; background:#F4F5F7; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif; color:#1D2129;" class="email-bg">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="email-bg" style="background:#F4F5F7;padding:24px 12px;">
 <tr><td align="center">
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;">
 <tr><td style="padding-bottom:4px;">
-  <h1 class="email-text" style="margin:0;color:#111827;font-size:22px;font-weight:800;letter-spacing:-0.3px;">Nhà & căn hộ Hà Nội</h1>
-  <p class="email-muted" style="margin:6px 0 0;color:#9ca3af;font-size:13px;">Cập nhật {escape(timestamp)} · {len(listings)} tin đăng ·
-    <a href="{escape(GITHUB_PAGE_URL)}" style="color:#86198f;font-weight:600;">Xem đầy đủ (ảnh rõ hơn) →</a>
+  <div class="email-text" style="margin:0;color:#1D2129;font-size:20px;font-weight:600;line-height:1.3;">Nhà & căn hộ Hà Nội</div>
+  <p class="email-muted" style="margin:2px 0 0;color:#596170;font-size:13px;">Cập nhật {escape(timestamp)} · {len(listings)} tin đăng ·
+    <a href="{escape(GITHUB_PAGE_URL)}" style="color:#3B5BDB;">Xem đầy đủ, ảnh rõ hơn</a>
   </p>
 </td></tr>
 <tr><td>
 {body}
 </td></tr>
-<tr><td style="padding:20px 4px 0;color:#9ca3af;font-size:11px;line-height:1.6;">
+<tr><td class="email-muted" style="padding:16px 4px 0;color:#6E7581;font-size:12px;line-height:1.6;">
 Nguồn: từng tin đăng thực tế trên Mogi.vn (không phải giá trung bình) · Email tự động, chỉ mang tính tham khảo, không phải lời khuyên đầu tư.
 </td></tr>
 </table>
@@ -1768,12 +1770,12 @@ def cmd_build():
             price_history[l["id"]] = {"price_trieu": price_now, "last_seen": _today_str()}
     save_price_history(price_history)
     if drops_found:
-        print(f"  {drops_found} listing(s) have a lower price than last seen (shown with ⬇ in the email).")
+        print(f"  {drops_found} listing(s) have a lower price than last seen (shown with ▼ in the email).")
 
     flagged = [(l, flag_suspicious(l)) for l in listings]
     flagged = [(l, w) for l, w in flagged if w]
     if flagged:
-        print(f"  {len(flagged)} listing(s) flagged for review in the email itself (marked with ⚠️):",
+        print(f"  {len(flagged)} listing(s) flagged for review in the email itself (shown in an amber note):",
               file=sys.stderr)
         for l, warnings in flagged[:10]:
             print(f"    [{l['category']}] {format_price(l['price_trieu'])} - {l['title'][:50]} - "
