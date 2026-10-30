@@ -82,22 +82,34 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions: {}
+    env:
+      # Without the COPILOT_PAT secret the review is skipped (with a warning)
+      # and the listings are checked by the rules alone.
+      HAS_COPILOT: ${{ secrets.COPILOT_PAT != '' }}
     steps:
+      - name: Warn that the Copilot token is missing
+        if: env.HAS_COPILOT != 'true'
+        run: echo "::warning title=AI review skipped::The COPILOT_PAT secret is not set, so listings were checked by the rules only. Add a fine-grained token with the Copilot Requests permission in Settings -> Secrets and variables -> Actions."
+
       - name: Download AI prompt
+        if: env.HAS_COPILOT == 'true'
         uses: actions/download-artifact@v7
         with:
           name: ai-prompt
           path: ${{ runner.temp }}/ai-in
 
       - name: Set up Node.js
+        if: env.HAS_COPILOT == 'true'
         uses: actions/setup-node@v7
 
       # Pinned to an exact version so a new release can't change what runs
       # here with the PAT in scope. Bump deliberately.
       - name: Install Copilot CLI
+        if: env.HAS_COPILOT == 'true'
         run: npm install -g @github/copilot@1.0.88
 
       - name: AI review listings
+        if: env.HAS_COPILOT == 'true'
         continue-on-error: true  # fails open - build step handles a missing/bad response gracefully
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
@@ -111,12 +123,23 @@ jobs:
         run: |
           mkdir -p "$AI_OUT" "$AI_CWD"
           cd "$AI_CWD"
+          set +e
           copilot -p "$(cat "$AI_IN/ai_prompt.txt")" \
             --silent --no-color --no-auto-update \
             --deny-tool=shell --deny-tool=write --deny-tool=url \
             --disallow-temp-dir --disable-builtin-mcps \
             --no-custom-instructions --no-ask-user \
-            > "$AI_OUT/ai_response.json"
+            > "$AI_OUT/ai_response.json" 2> "$RUNNER_TEMP/copilot-stderr.txt"
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            # This step fails open (the run stays green), so put the reason
+            # in the run's annotations where it can be seen. One line only,
+            # so nothing in it can start another workflow command.
+            reason="$(head -c 400 "$RUNNER_TEMP/copilot-stderr.txt" | tr '\r\n' '  ' | sed 's/%/%25/g')"
+            echo "::warning title=AI review failed::Copilot CLI exited with code $status: ${reason:-no error output}"
+            exit "$status"
+          fi
           echo "--- raw Copilot CLI output (for debugging) ---"
           # Model output is untrusted: don't let it issue ::workflow commands::
           stop="$(cat /proc/sys/kernel/random/uuid)"
@@ -126,6 +149,7 @@ jobs:
           echo "::$stop::"
 
       - name: Upload AI response
+        if: env.HAS_COPILOT == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: ai-response
@@ -165,17 +189,21 @@ jobs:
           pip install --upgrade certifi
           pip install -r requirements.txt
 
+      # last_price.json: listings already emailed (not sent again for
+      # REPEAT_AFTER_DAYS days); price_history.json: prices seen, for the
+      # price-drop marks. Both live on the house-price-state branch.
       - name: Restore dedup state
         run: |
-          git fetch origin house-price-state 2>/dev/null && \
-            git show origin/house-price-state:state/last_price.json > /tmp/last_price.json 2>/dev/null || true
           mkdir -p state
-          if [ -s /tmp/last_price.json ]; then
-            cp /tmp/last_price.json state/last_price.json
-            echo "Restored previous state."
-          else
-            echo "No previous state found - first run."
-          fi
+          git fetch origin house-price-state 2>/dev/null || true
+          for f in last_price.json price_history.json; do
+            if git show "origin/house-price-state:state/$f" > "/tmp/$f" 2>/dev/null && [ -s "/tmp/$f" ]; then
+              cp "/tmp/$f" "state/$f"
+              echo "Restored state/$f."
+            else
+              echo "No saved state/$f yet."
+            fi
+          done
 
       - name: Download listings
         uses: actions/download-artifact@v7
@@ -241,12 +269,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          cp state/last_price.json /tmp/last_price.json
+          mkdir -p /tmp/state
+          cp state/last_price.json state/price_history.json /tmp/state/ 2>/dev/null || true
+          if ! ls /tmp/state/*.json >/dev/null 2>&1; then
+            echo "No state to save."
+            exit 0
+          fi
           git checkout --orphan house-price-state-new
           git reset --hard
           mkdir -p state
-          cp /tmp/last_price.json state/last_price.json
-          git add -f state/last_price.json
+          cp /tmp/state/*.json state/
+          git add -f state/*.json
           git commit -m "Update dedup state" || echo "Nothing to commit"
           git branch -f house-price-state house-price-state-new
           git push origin house-price-state --force
