@@ -93,7 +93,7 @@ jobs:
 
       - name: Download AI prompt
         if: env.HAS_COPILOT == 'true'
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: ai-prompt
           path: ${{ runner.temp }}/ai-in
@@ -206,7 +206,7 @@ jobs:
           done
 
       - name: Download listings
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: listings
           path: email
@@ -214,7 +214,7 @@ jobs:
       # Absent when the AI review failed or was skipped.
       - name: Download AI response
         continue-on-error: true
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: ai-response
           path: email
